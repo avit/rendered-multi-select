@@ -138,9 +138,6 @@ class RenderedMultiSelect
     event.stopPropagation()
     event.preventDefault()
   
-  escapeAttr: (v) ->
-    v.replace(/'/g, '&apos;').replace(/"/g, '&quot;') if v?
-  
   clearInput: ->
     @lastName = null
     @input.text("")
@@ -152,7 +149,7 @@ class RenderedMultiSelect
     return if @itemExists(name)
     if @options.onCreateItem
       return unless name = @options.onCreateItem(name)
-    @addItemRow(_.escape(name), _.escape(name))
+    @addItemRow(name, name)
     @clearInput()
     @updateQuery()
   
@@ -189,7 +186,9 @@ class RenderedMultiSelect
       groupedResults = @groupResults(results)
       for parent, results of groupedResults
         if results.length > 0
-          @resultList.append("<li class='header-row'>#{parent}</li>")
+          headerRow = $("<li class='header-row'></li>")
+          headerRow.text = parent
+          @resultList.append(headerRow)
           resultAdded = @appendResults(results, "has-parent")
     else    
       resultAdded = @appendResults(results, "")
@@ -228,14 +227,19 @@ class RenderedMultiSelect
       name = result.name
       if newExistingNames.length > 0 || existingIds.length > 0
         name = name.replace(/^(&nbsp;)+/, "")
-      
-      cleanName = _.escape($("<div>#{name}</div>").text())
+
+      listItem = $("<li></li>")
+      listItem.addClass(classes)
+      listItem.data('id', result.id)
+      listItem.text(name)
 
       @resultData[result.id] = name
-      @resultList.append("<li class='#{classes}' data-id='#{@escapeAttr(result.id)}'>#{cleanName}</li>")
+      @resultList.append(listItem)
       resultAdded = true
     if tooMany
-      @resultList.append("<li class='#{classes}' style='color: #ccc;'><small>Too many results, search to display more&#8230;</small></li>")
+      listItem = $("<li style='color: #ccc;'><small>Too many results, search to display more&#8230;</small></li>")
+      listItem.addClass(classes)
+      @resultList.append(listItem)
     resultAdded
 
   addItem: (result) ->
@@ -267,8 +271,10 @@ class RenderedMultiSelect
       style = @options.onStyleItem(name)
     else
       style = ""
-    row = $("<li class='rendered-multi-select-element' data-id='#{@escapeAttr(id)}' style='#{style}'></li>")
-    row.html(name)
+    row = $("<li class='rendered-multi-select-element'></li>")
+    row.style = style
+    row.data('id', id)
+    row.text(name)
     row.append("<b>&times;</b>")
     @inputContainer.before(row)  
     @element.trigger("change")
